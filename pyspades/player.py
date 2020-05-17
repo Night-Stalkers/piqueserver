@@ -26,7 +26,7 @@ from pyspades.constants import (BLOCK_TOOL, CTF_MODE, ERROR_FULL,
                                 TC_CAPTURE_DISTANCE, TC_MODE, WEAPON_KILL,
                                 WEAPON_TOOL)
 from pyspades.mapgenerator import ProgressiveMapGenerator
-from pyspades.packet import call_packet_handler, register_packet_handler
+from pyspades.packet import call_packet_handler, register_packet_handler, PacketSpamPlayerData
 from pyspades.protocol import BaseConnection
 from pyspades.team import Team
 from pyspades.weapon import WEAPONS
@@ -118,6 +118,7 @@ class ServerConnection(BaseConnection):
         self.client_info = {}
         self.proto_extensions = {}  # type: Dict[int, int]
         self.line_build_start_pos = None
+        self.packet_spam_protection=PacketSpamPlayerData(self)
 
     def on_connect(self) -> None:
         if self.local:

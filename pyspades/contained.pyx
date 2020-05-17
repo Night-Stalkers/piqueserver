@@ -849,6 +849,8 @@ register_packet(FogColor)
 @cython.freelist(8)
 cdef class WeaponReload(Loader):
     id = 28
+    max_per_second = 30
+    spam_reaction = "kick"
 
     cdef public:
         int player_id, clip_ammo, reserve_ammo

@@ -17,6 +17,7 @@
 
 from pyspades.loaders cimport Loader
 from pyspades.bytes cimport ByteReader, ByteWriter
+from twisted.internet import reactor
 
 _client_loaders = {}
 _server_loaders = {}
@@ -96,6 +97,10 @@ def register_packet(loader=None, server=True, client=True, extension=None):
         # Call the registration function directly if we are being called as a
         # function, not as a decorator
         register(loader)
+        if not loader.id in packet_spam_protection_data: #replace with a check for membership if python3 has that
+          max_per_sec=loader.max_per_second if 'max_per_second' in loader.__dict__ else 50
+          spam_reaction=loader.spam_reaction if 'spam_reaction' in loader.__dict__ else "kick"
+          packet_spam_protection_data[loader.id]=PacketSpamProtectData(max_per_sec, spam_reaction)
 
     return register
 
@@ -111,6 +116,7 @@ cdef inline Loader load_contained_packet(ByteReader data, dict table):
     return table[type_](data)
 
 _packet_handlers = {}
+packet_spam_protection_data={}
 
 def register_packet_handler(loader):
     def register_handler(function):
@@ -120,6 +126,7 @@ def register_packet_handler(loader):
 
 def call_packet_handler(self, loader):
     contained = load_client_packet(ByteReader(loader.data))
+    self.packet_spam_protection.on_receive(self, loader.data, contained)
     try:
         handler = _packet_handlers[contained.id]
     except KeyError:
@@ -129,3 +136,35 @@ def call_packet_handler(self, loader):
         # we call the handler in the finally clause so we don't
         # accidentally ignore KeyErrors the handler raises
         handler(self, contained)
+
+class PacketSpamProtectData:
+  def __init__(self, maxpersec, spamreaction):
+    self.max_per_sec=maxpersec
+    self.spam_reaction=spamreaction
+
+class PacketSpamPlayerData:
+    def __init__(self, player):
+      self.packetctr=[0 for i in range(0, max(_packet_handlers.keys()))]
+      self.packettimer=[0.0 for i in range(0, max(_packet_handlers.keys()))]
+    def on_receive(self, plr, rawdata, packet):
+      if packet.id>=len(self.packetctr):
+        print("[spam.protection] Sudden unregistered packet ID %s" % packet.id)
+        return
+      self.packetctr[packet.id]+=1
+      protect_data=packet_spam_protection_data[packet.id]
+      if self.packetctr[packet.id]>=protect_data.max_per_sec:
+        t=reactor.seconds()
+        tdiff=t-self.packettimer[packet.id]
+        if tdiff<1.0/protect_data.max_per_sec:
+           print("[spam.protection] Player #%s exceeded max limit of packet type %s: %s/%s, reaction: %s" % (plr.player_id, packet.id, self.packetctr[packet.id], tdiff, protect_data.spam_reaction))
+           if protect_data.spam_reaction=="none":
+             pass
+           elif protect_data.spam_reaction=="kick":
+             plr.kick("Packet spam")
+           elif protect_data.spam_reaction=="ban":
+             plr.ban("Packet spam")
+           else:
+             print("[spam.protection] Unknown packet %s reaction %s" % (packet.id, protect_data.spam_reaction))
+           return
+        self.packetctr[packet.id]=0
+        self.packettimer[packet.id]=t
