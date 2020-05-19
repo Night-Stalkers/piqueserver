@@ -957,6 +957,8 @@ def run() -> None:
     # load and apply regular scripts
     script_names = scripts_option.get()
     script_dir = os.path.join(config.config_dir, 'scripts/')
+    if script_dir not in sys.path:
+        sys.path.append(script_dir)
     script_objects = extensions.load_scripts_regular_extension(
         script_names, script_dir)
     (protocol_class, connection_class) = extensions.apply_scripts(
