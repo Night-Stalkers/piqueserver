@@ -155,8 +155,14 @@ class PacketSpamPlayerData:
       if self.packetctr[packet.id]>=protect_data.max_per_sec:
         t=reactor.seconds()
         tdiff=t-self.packettimer[packet.id]
+        self.packettimer[packet.id]=t
+        ctr=self.packetctr[packet.id]
+        self.packetctr[packet.id]=0
         if tdiff<1.0/protect_data.max_per_sec:
-           print("[spam.protection] Player #%s exceeded max limit of packet type %s: %s/%s, reaction: %s" % (plr.player_id, packet.id, self.packetctr[packet.id], tdiff, protect_data.spam_reaction))
+           warning_msg="[spam.protection] Player #%s exceeded max limit of packet type %s: %s/%s, reaction: %s" % (plr.player_id, packet.id, ctr, tdiff, protect_data.spam_reaction)
+           print(warning_msg)
+           plr.protocol.irc_say(warning_msg)
+           plr.protocol.broadcast_chat(warning_msg)
            if protect_data.spam_reaction=="none":
              pass
            elif protect_data.spam_reaction=="kick":
@@ -166,5 +172,14 @@ class PacketSpamPlayerData:
            else:
              print("[spam.protection] Unknown packet %s reaction %s" % (packet.id, protect_data.spam_reaction))
            return
-        self.packetctr[packet.id]=0
-        self.packettimer[packet.id]=t
+    def get_statistics(self, packet_id=None):
+      t=reactor.seconds()
+      stat=''
+      if packet_id==None:
+        for i in range(len(self.packetctr)):
+          tdiff=t-self.packettimer[i]
+          stat+="[%s]%s over %ss, avg:%s/s;" % (i, self.packetctr[i], tdiff, self.packetctr[i]/tdiff)
+      else:
+          tdiff=t-self.packettimer[packet_id]
+          stat+="[%s]%s over %ss, avg:%s/s;" % (packet_id, self.packetctr[packet_id], tdiff, self.packetctr[packet_id]/tdiff)
+      return stat

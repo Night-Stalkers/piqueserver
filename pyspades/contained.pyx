@@ -70,6 +70,8 @@ id_iter = itertools.count()
 
 cdef class PositionData(Loader):
     id = 0
+    max_per_second = 60
+    spam_reaction = "kick"
 
     cdef public:
         float x, y, z
@@ -92,6 +94,8 @@ register_packet(PositionData)
 
 cdef class OrientationData(Loader):
     id = 1
+    max_per_second = 300
+    spam_reaction = "kick"
 
     cdef public:
         float x, y, z
@@ -150,6 +154,8 @@ register_packet(WorldUpdate)
 
 cdef class InputData(Loader):
     id = 3
+    max_per_second = 100
+    spam_reaction = "kick"
     cdef public:
         int player_id
         bint up, down, left, right, jump, crouch, sneak, sprint
@@ -179,6 +185,8 @@ register_packet(InputData)
 
 cdef class WeaponInput(Loader):
     id = 4
+    max_per_second = 100
+    spam_reaction = "kick"
 
     cdef public:
         bint primary, secondary
@@ -201,6 +209,8 @@ register_packet(WeaponInput)
 
 cdef class HitPacket(Loader):
     id = 5
+    max_per_second = 100
+    spam_reaction = "kick"
 
     cdef public:
         int player_id, value
@@ -243,6 +253,8 @@ register_packet(SetHP, client=False)
 
 cdef class GrenadePacket(Loader):
     id = 6
+    max_per_second = 300
+    spam_reaction = "kick"
 
     cdef public:
         int player_id
@@ -271,6 +283,8 @@ register_packet(GrenadePacket)
 @cython.freelist(8)
 cdef class SetTool(Loader):
     id = 7
+    max_per_second = 200
+    spam_reaction = "ban"
 
     cdef public:
         int player_id, value
@@ -288,6 +302,8 @@ register_packet(SetTool)
 
 cdef class SetColor(Loader):
     id = 8
+    max_per_second = 100
+    spam_reaction = "kick"
 
     cdef public:
         unsigned int value, player_id
@@ -404,6 +420,8 @@ register_packet(CreatePlayer)
 
 cdef class BlockAction(Loader):
     id = 13
+    max_per_second = 20
+    spam_reaction = "kick"
 
     cdef public:
         int x, y, z, value, player_id
@@ -427,6 +445,8 @@ register_packet(BlockAction)
 
 cdef class BlockLine(Loader):
     id = 14
+    max_per_second = 20
+    spam_reaction = "kick"
 
     cdef public:
         int player_id
@@ -849,8 +869,8 @@ register_packet(FogColor)
 @cython.freelist(8)
 cdef class WeaponReload(Loader):
     id = 28
-    max_per_second = 30
-    spam_reaction = "kick"
+    max_per_second = 50
+    spam_reaction = "ban"
 
     cdef public:
         int player_id, clip_ammo, reserve_ammo
@@ -870,6 +890,8 @@ register_packet(WeaponReload)
 
 cdef class ChangeTeam(Loader):
     id = 29
+    max_per_second = 10
+    spam_reaction = "kick"
 
     cdef public:
         int player_id, team
@@ -887,6 +909,8 @@ register_packet(ChangeTeam)
 
 cdef class ChangeWeapon(Loader):
     id = 30
+    max_per_second = 10
+    spam_reaction = "kick"
 
     cdef public:
         int player_id, weapon

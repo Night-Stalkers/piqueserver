@@ -369,3 +369,14 @@ def god_build(connection, player):
     if connection is not player and connection in protocol.players.values():
         connection.send_chat('%s is %s' % (player.name, message))
     protocol.irc_say('* %s is %s' % (player.name, message))
+
+
+
+@command(admin_only=True)
+def packet_statistics(connection, plrname, packet_id=None):
+    """
+    Display packet statistics on a player
+    /packet_statistics <player> [packet_id]
+    """
+    player = get_player(connection.protocol, plrname)
+    return player.packet_spam_protection.get_statistics(packet_id if packet_id==None else int(packet_id))
